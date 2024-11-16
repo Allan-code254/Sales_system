@@ -1,105 +1,130 @@
-<?php
-session_start();
-include 'db.php';
-
-// Ensure only logged-in users can access this page
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
-
-// Add new product
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_product'])) {
-    $name = $_POST['name'];
-    $description = $_POST['description'];
-    $price = $_POST['price'];
-    $stock = $_POST['stock'];
-
-    $stmt = $conn->prepare("INSERT INTO products (name, description, price, stock) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("ssdi", $name, $description, $price, $stock);
-    $stmt->execute();
-    $stmt->close();
-    echo "<p>Product added successfully!</p>";
-}
-
-// Edit product
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['edit_product'])) {
-    $id = $_POST['product_id'];
-    $name = $_POST['name'];
-    $description = $_POST['description'];
-    $price = $_POST['price'];
-    $stock = $_POST['stock'];
-
-    $stmt = $conn->prepare("UPDATE products SET name=?, description=?, price=?, stock=? WHERE id=?");
-    $stmt->bind_param("ssdii", $name, $description, $price, $stock, $id);
-    $stmt->execute();
-    $stmt->close();
-    echo "<p>Product updated successfully!</p>";
-}
-
-// Fetch all products
-$products = $conn->query("SELECT * FROM products");
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Product Management</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products</title>
+    <link rel="stylesheet" href="styles.css">
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 600px; padding: 20px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); }
-        h2 { text-align: center; color: #333; }
-        form { display: flex; flex-direction: column; margin-bottom: 20px; }
-        input, textarea, button { margin: 8px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        button { background-color: #4CAF50; color: white; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 10px; border: 1px solid #ddd; text-align: center; }
-        th { background-color: #f2f2f2; }
-        .edit-btn { background-color: #008CBA; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; }
+        .product-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            gap: 20px;
+            padding: 20px;
+        }
+        .product {
+            width: 200px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            transition: transform 0.3s ease;
+        }
+        .product:hover {
+            transform: scale(1.05);
+        }
+        .product img {
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        .product h3 {
+            font-size: 1.2em;
+            color: #333;
+        }
+        .product p {
+            font-size: 1em;
+            color: #555;
+        }
+        .product .price {
+            font-size: 1.1em;
+            color: #4CAF50;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Add New Product</h2>
-        <form action="products.php" method="POST">
-            <input type="text" name="name" placeholder="Product Name" required>
-            <textarea name="description" placeholder="Product Description" rows="3" required></textarea>
-            <input type="number" step="0.01" name="price" placeholder="Price" required>
-            <input type="number" name="stock" placeholder="Stock Quantity" required>
-            <button type="submit" name="add_product">Add Product</button>
-        </form>
-
-        <h2>Manage Products</h2>
-        <table>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Price</th>
-                <th>Stock</th>
-                <th>Action</th>
-            </tr>
-            <?php while ($product = $products->fetch_assoc()) { ?>
-                <tr>
-                    <td><?= $product['id'] ?></td>
-                    <td><?= htmlspecialchars($product['name']) ?></td>
-                    <td><?= htmlspecialchars($product['description']) ?></td>
-                    <td>$<?= $product['price'] ?></td>
-                    <td><?= $product['stock'] ?></td>
-                    <td>
-                        <form action="products.php" method="POST" style="display:inline;">
-                            <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
-                            <input type="text" name="name" value="<?= htmlspecialchars($product['name']) ?>" required>
-                            <input type="text" name="description" value="<?= htmlspecialchars($product['description']) ?>" required>
-                            <input type="number" step="0.01" name="price" value="<?= $product['price'] ?>" required>
-                            <input type="number" name="stock" value="<?= $product['stock'] ?>" required>
-                            <button type="submit" name="edit_product" class="edit-btn">Update</button>
-                        </form>
-                    </td>
-                </tr>
-            <?php } ?>
-        </table>
-    </div>
+    <header>
+        <h1>Our Products</h1>
+    </header>
+    <nav>
+        <ul>
+            <li><a href="index.php">Home</a></li>
+            <li><a href="about.php">About Us</a></li>
+            <li><a href="services.php">Services</a></li>
+            <li><a href="contact.php">Contact</a></li>
+            <li><a href="login.php">Login</a></li>
+            <li><a href="logout.php">Logout</a></li>
+            <li><a href="transactions.php">Transactions</a></li>
+            <li><a href="products.php">Products</a></li>
+        </ul>
+    </nav>
+    <main>
+        <h2>Featured Products</h2>
+        <div class="product-container">
+            <!-- Product 1 -->
+            <div class="product">
+                <img src="img/products/f1.jpg" alt="Product 1">
+                <h3>Product 1</h3>
+                <p>Meets your needs.</p>
+                <div class="price">Ksh 450.00</div>
+            </div>
+            <!-- Product 2 -->
+            <div class="product">
+                <img src="img/products/f2.jpg" alt="Product 2">
+                <h3>Product 2</h3>
+                <p>Durable and reliable for everyday use.</p>
+                <div class="price">Ksh 120.00</div>
+            </div>
+            <!-- Product 3 -->
+            <div class="product">
+                <img src="img/products/f3.jpg" alt="Product 3">
+                <h3>Product 3</h3>
+                <p>Elegant design with amazing features.</p>
+                <div class="price">Ksh 1500.00</div>
+            </div>
+            <!-- Product 4 -->
+            <div class="product">
+                <img src="img/products/f4.jpg" alt="Product 4">
+                <h3>Product 4</h3>
+                <p>Perfect for outdoor adventures.</p>
+                <div class="price">Ksh 1250.00</div>
+            </div>
+            <!-- Product 5 -->
+            <div class="product">
+                <img src="img/products/f5.jpg" alt="Product 5">
+                <h3>Product 5</h3>
+                <p>Stylish, great for travel.</p>
+                <div class="price">Ksh 450.00</div>
+            </div>
+            <!-- Product 6 -->
+            <div class="product">
+                <img src="img/products/f6.jpg" alt="Product 6">
+                <h3>Product 6</h3>
+                <p>Premium quality with unmatched durability.</p>
+                <div class="price">Ksh 300.00</div>
+            </div>
+            <!-- Product 7 -->
+            <div class="product">
+                <img src="img/products/f7.jpg" alt="Product 7">
+                <h3>Product 7</h3>
+                <p>State-of-the-art technology inside.</p>
+                <div class="price">Ksh 250.00</div>
+            </div>
+            <!-- Product 8 -->
+            <div class="product">
+                <img src="img/products/f8.jpg" alt="Product 8">
+                <h3>Product 8</h3>
+                <p>Designed for comfort.</p>
+                <div class="price">Ksh 1300.00</div>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; <?php echo date("Y"); ?> Our Online Store. All Rights Reserved.</p>
+    </footer>
 </body>
 </html>

@@ -1,31 +1,24 @@
 <?php
 session_start();
-require 'db.php'; // Ensure this points to your database connection file
+include 'db.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $password = mysqli_real_escape_string($conn, $_POST['password']);
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $email = $_POST['email'];
+    $password = $_POST['password'];
 
-    // Query to check user credentials
-    $sql = "SELECT * FROM users WHERE email = '$email'";
-    $result = mysqli_query($conn, $sql);
+    $sql = "SELECT * FROM users WHERE email = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
 
-    if ($result && mysqli_num_rows($result) === 1) {
-        $user = mysqli_fetch_assoc($result);
-
-        // Verify password (assuming passwords are hashed)
-        if (password_verify($password, $user['password'])) {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['email'] = $user['email'];
-            header("Location: dashboard.php"); // Redirect to the dashboard
-            exit();
-        } else {
-            echo "Invalid password.";
-        }
+    if ($user && password_verify($password, $user['password'])) {
+        $_SESSION['user_email'] = $email; // Set session
+        header("Location: index.php");
+        exit;
     } else {
-        echo "User not found.";
+        echo "<p>Invalid email or password. Please try again.</p>";
     }
-} else {
-    echo "Invalid request.";
 }
 ?>
