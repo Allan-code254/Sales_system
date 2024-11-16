@@ -1,20 +1,37 @@
 <?php
-require 'db.php'; // Database connection
+session_start();
+include 'db.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $email = $_POST['email'];
+    $password = $_POST['password'];
 
-    // Insert the user into the database
-    $sql = "INSERT INTO users (email, password) VALUES ('$email', '$password')";
-    if (mysqli_query($conn, $sql)) {
-        header("Location: login.php");
+    // Check if the email already exists
+    $query = $conn->prepare("SELECT * FROM users WHERE email = ?");
+    $query->bind_param("s", $email);
+    $query->execute();
+    $result = $query->get_result();
+
+    if ($result->num_rows > 0) {
+        echo "<script>alert('Email already exists! Please log in.'); window.location.href = 'login.php';</script>";
         exit();
+    }
+
+    // Hash the password
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+    // Insert into the database
+    $query = $conn->prepare("INSERT INTO users (email, password) VALUES (?, ?)");
+    $query->bind_param("ss", $email, $hashed_password);
+
+    if ($query->execute()) {
+        echo "<script>alert('Signup successful! Please log in.'); window.location.href = 'login.php';</script>";
     } else {
-        $error = "Error: " . mysqli_error($conn);
+        echo "<script>alert('Error: Could not complete signup.'); window.location.href = 'signup.php';</script>";
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
